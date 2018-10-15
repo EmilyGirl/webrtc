@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>client connection</title>
+</head>
+<style>
+    body{
+    
+}
+video{
+    background: #666;
+}
+.page{
+    position: relative;
+    display: block;
+    width: 500px;
+    height: 800px;
+    margin: 0 auto;
+}
+#yours{
+    width: 300px;
+    height: 300px;
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+#theirs{
+width: 150px;
+height: 150px;
+position: absolute;
+right: 0;
+top: 0;
+}
+#their-username{
+    position: absolute;
+    top: 50px;
+    left: 0;
+}
+#connect{
+    position: absolute;
+    left: 200px;
+    top:50px
+}
+#onHang{
+    position: absolute;
+    left: 450px;
+    top: 50px;
+}
+#files{
+    position: absolute;
+    left: 0;
+    top: 431px;
+}
+#send{
+    position: absolute;
+    right: 0;
+    top: 434px;
+}
+#ready{
+    position: absolute;
+    left: 320px;
+    top: 50px;
+}
+#status{
+    position: absolute;
+    left: 400px;
+    bottom: 50px;
+}
+#download{
+    position: absolute;
+    left: 500px;
+    bottom: 50px;
+}
+#sendProgress{
+    position: absolute;
+    left: 0px;
+    top:470px;
+}
+
+#receiveProgress{
+    position: absolute;
+    left: 0px;
+    top:470px;
+}
+#received{
+    position: absolute;
+    left: 0;
+    top: 110px;
+    width: 500px;
+    height: 200px;
+    overflow: scroll;
+    background: #ccc;
+    color: #000;
+}
+#message{
+    position: absolute;
+    left: 0;
+    top: 315px;
+    width: 493px;
+    height: 100px;
+}
+#onlineUser{
+    position: absolute;
+    left: -235px;
+    top: 0;
+    width: 200px;
+    height: 300px;
+    overflow: scroll;
+    color: #000;
+    border: 1px solid #666;
+    border-radius: 20px;
+    padding: 10px;
+}
+</style>
+
+<body>
+    <div id="login-page" class="page">
+        <h2>login as</h2>
+        <input type="text" id="username">
+        <button id="login">login</button>
+    </div>
+    <div id="share-page" class="page">
+        <!-- 显示登录用户 -->
+        <div id="onlineUser"></div>
+        <!-- 建立对等连接 -->
+        <input type="text" id="their-username">
+        <button id="connect">connect</button>
+        <button id="onHang">挂断</button>
+        <!-- 记录 -->
+        <div id="received"></div>
+
+        <!--数据通道开启 -->
+        <div id="ready">数据通道开启</div><br />
+        <!-- 文本发送 -->
+        <textarea name="message" id="message" cols="30" rows="10"></textarea>
+
+        <!-- 发送方发送文件 -->
+        <input type="file" id="files" name="file">
+        <button id="send">send</button>
+        <!-- 发送进度 -->
+        <div id="sendProgress"></div>
+        <!-- 接收进度 -->
+        <div id="receiveProgress"></div>
+        <!-- <a href="" id="download">下载</a> -->
+    </div>
+</body>
+<script src="main.js"></script>
+
+</html>
