@@ -47,8 +47,13 @@ top: 0;
 }
 #onHang{
     position: absolute;
-    left: 450px;
+    left: 486px;
     top: 50px;
+}
+#loginout{
+    position: absolute;
+    left:480px;
+    top:0;
 }
 #files{
     position: absolute;
@@ -63,7 +68,12 @@ top: 0;
 #ready{
     position: absolute;
     left: 320px;
-    top: 50px;
+    top: 77px;
+}
+#readyConnect{
+    position: absolute;
+    left: 0;
+    top: 77px;
 }
 #status{
     position: absolute;
@@ -115,6 +125,17 @@ top: 0;
     border-radius: 20px;
     padding: 10px;
 }
+#doOffer{
+    position: absolute;
+    width: 400px;
+    height: 200px;
+    background: #fff;
+    border-radius: 10px;
+    border: 1px solid #666;
+    top: 0;
+    left: 100px;
+    z-index: 11;
+}
 </style>
 
 <body>
@@ -126,15 +147,18 @@ top: 0;
     <div id="share-page" class="page">
         <!-- 显示登录用户 -->
         <div id="onlineUser"></div>
+        <!-- 退出 -->
+        <button  id="loginout">退出</button>
         <!-- 建立对等连接 -->
         <input type="text" id="their-username">
         <button id="connect">connect</button>
         <button id="onHang">挂断</button>
         <!-- 记录 -->
         <div id="received"></div>
-
+        <!-- 连接 -->
+        <div id="readyConnect"></div>
         <!--数据通道开启 -->
-        <div id="ready">数据通道开启</div><br />
+        <!-- <div id="ready"></div><br /> -->
         <!-- 文本发送 -->
         <textarea name="message" id="message" cols="30" rows="10"></textarea>
 
@@ -145,9 +169,13 @@ top: 0;
         <div id="sendProgress"></div>
         <!-- 接收进度 -->
         <div id="receiveProgress"></div>
-        <!-- <a href="" id="download">下载</a> -->
+        <!-- 处理其他用户二次请求弹框 -->
+        <div id="doOffer">
+            <div id="doOfferText"></div>
+           <button id="doOffersuccess">同意</button>
+           <button id="doOfferfail">拒绝</button>
+        </div>
     </div>
 </body>
 <script src="main.js"></script>
-
 </html>

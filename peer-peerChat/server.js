@@ -34,12 +34,13 @@ console.log("http://192.168.131.216:8081")
 var WebSocketServer = require('ws').Server,
     wss = new WebSocketServer({ port: 8080 }),
     users = {},
-    onlineUser = [];
+    onlineUser = [];//显示用户人数
 // ws服务
 wss.on('connection', function (connection) {
     // 建立连接调用服务器connection事件
     console.log('client connected');
     connection.on('message', function (message) {
+
         // 用户反馈信息
         var data;
         try {
@@ -49,28 +50,60 @@ wss.on('connection', function (connection) {
         } catch (error) {
             data = {};
         }
+        console.log("data", data)
         switch (data.type) {
             case "login":
                 console.log("user logged", data.name);
-                // 如果存在这个用户的话
-                if (users[data.name]) {
-                    //     sendTo(connection, {
-                    //         type: 'login',
-                    //         success: false
-                    //     });
-                } else {
+                //    不包含这个用户
+                if (onlineUser.indexOf(data.name) == -1) {
+
                     users[data.name] = connection;
                     connection.name = data.name;
+                    sendTo(connection, {
+                        type: 'login',
+                        success: true,
+                        user: data.name
+
+                    });
+                } else {
+
+                    sendTo(connection, {
+                        type: 'login',
+                        success: false
+                    });
+                    return;
                 }
-                sendTo(connection, {
-                    type: 'login',
-                    success: true,
-                });
                 //登陆成功人
-                onlineUser.push(connection.name);
-                sendTo(connection, {
-                    type: 'onlines',
+                if (connection.name != null) {
+                    onlineUser.push(connection.name);
+                }
+                //    广播展示
+                const obj = ({
+                    type: 'online',
                     user: onlineUser
+                })
+                wss.clients.forEach(function each(client) {
+                    client.send(JSON.stringify(obj));
+                });
+
+                break;
+            case "getonlineusers":
+                console.log("获取在线用户");
+                sendTo(connection, {
+                    type: 'getonlineusers',
+                    users: onlineUser,
+                });
+                break;
+            case "newData":
+                onlineUser = data.newpublicUsers;
+                console.log("更新用户列表:-----", onlineUser);
+                const newObj = ({
+                    type: 'online',
+                    user: onlineUser
+                })
+                // 重新广播
+                wss.clients.forEach(function each(client) {
+                    client.send(JSON.stringify(newObj));
                 });
                 break;
             case "offer":
@@ -93,7 +126,7 @@ wss.on('connection', function (connection) {
                     sendTo(conn, {
                         type: "answer",
                         answer: data.answer,
-                        // name: connection.name
+                        name: connection.name
                     });
                 }
                 break;
@@ -125,12 +158,13 @@ wss.on('connection', function (connection) {
                 break;
         }
         console.log('用户发送的消息', message);
-    });
 
-    // connection.send("hello world1");
+
+    });
 });
 function sendTo(connection, message) {
     // 服务端向用户发送信息 对象转字符串
     connection.send(JSON.stringify(message))
 }
-console.log("running ws")
+console.log("running ws");
+
