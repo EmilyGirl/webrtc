@@ -9,24 +9,29 @@ var loginPage = document.querySelector("#login-page"),
     usernameInput = document.querySelector("#username"),
     loginButton = document.querySelector("#login"),
     theirUserInput = document.querySelector("#their-username"),
-    connectButton = document.querySelector("#connect"),
+    connectButton = document.querySelector(".connect"),
     sharePage = document.querySelector("#share-page"),
-    sendButton = document.querySelector("#send"),
+    sendButton = document.querySelector(".send"),
     readyConnect = document.querySelector("#readyConnect"),
     statusText = document.querySelector("#status"),
     download = document.querySelector("#download"),
     sendProgress = document.querySelector("#sendProgress"),
     receiveProgress = document.querySelector("#receiveProgress"),
     message = document.querySelector("#message"),
-    receivedRecord = document.querySelector("#received"),
+    receivedRecord = document.querySelector(".received"),
     onlineUser = document.querySelector("#onlineUser"),
-    onHang = document.querySelector("#onHang"),
+    onHang = document.querySelector(".onHang"),
     doOffer = document.querySelector("#doOffer"),
     doOffersuccess = document.querySelector("#doOffersuccess"),
     doOfferfail = document.querySelector("#doOfferfail"),
-    loginout = document.querySelector("#loginout"),
+    loginout = document.querySelector(".loginout"),
+    YouronLine = document.querySelector(".YouronLine"),
     doOfferText = document.querySelector("#doOfferText");
-doOffer.style.display = "none";
+
+
+$("#doOffer").modal("hide");
+sendProgress.style.display = "none";
+receiveProgress.style.display = "none";
 sharePage.style.display = "none";
 //    sendButton.disabled = true;
 // 用户开启与服务端的连接
@@ -83,14 +88,16 @@ connection.onerror = function (err) {
 function onLines(users) {
     // publicUsers = users;
     onlineUser.innerHTML = '';
+    YouronLine.innerHTML = name;
     for (var i = 0; i < users.length; i++) {
         var online = document.createElement("div");
         online.style.marginBottom = "20px";
         online.innerHTML = users[i];
+        // 列表中是自己
         if (online.innerHTML == name) {
-            online.style.color = "red";
+            online.style.color = 'red';
         }
-        onlineUser.append(online);
+        onlineUser.appendChild(online);
         online.addEventListener("click", function () {
             if (this.innerHTML == name) {
                 alert("这是你自己哦");
@@ -214,7 +221,8 @@ function startConnection(user) {
 };
 function onOffer(offer, name) {
     // 请求连接
-    doOffer.style.display = "block";
+
+    $("#doOffer").modal('show');
     connectionUser = name;
     doOfferText.innerHTML = connectionUser + "请求建立连接";
     doOffersuccess.addEventListener("click", function () {
@@ -230,10 +238,10 @@ function onOffer(offer, name) {
         }, function (err) {
             console.log(err);
         })
-        doOffer.style.display = "none";
+        $("#doOffer").modal("hide");
     })
     doOfferfail.addEventListener("click", function () {
-        doOffer.style.display = "none";
+        $("#doOffer").modal("hide");
     })
 
 };
@@ -260,9 +268,9 @@ function onLeave() {
     readyConnect.innerHTML = "关闭连接";
     setTimeout(() => {
         readyConnect.innerHTML = "";
-    }, 20000);
+    }, 2000);
     receivedRecord.innerHTML = "";
-
+    theirUserInput.value = '';
 }
 onHang.addEventListener("click", function () {
     send({
@@ -270,15 +278,16 @@ onHang.addEventListener("click", function () {
     });
     alert("挂断成功");
     readyConnect.innerHTML = "关闭连接";
+    theirUserInput.value = '';
     setTimeout(() => {
         readyConnect.innerHTML = "";
-    }, 20000);
+    }, 2000);
     receivedRecord.innerHTML = "";
     // sendButton.disabled = true;
 })
 // 双方发送数据
 sendButton.addEventListener("click", function () {
-    var files = document.querySelector("#files").files;
+    var files = document.querySelector(".files").files;
     var messageData = message.value;
     if (files.length > 0) {
         sendData();
@@ -295,7 +304,7 @@ sendButton.addEventListener("click", function () {
 var sendFilesSize, sendFileName, receiveBuffer = [], receivedSize = 0;
 function sendData() {
     console.log("datachannel file", dataChannel);
-    const file = document.querySelector("#files").files[0];
+    const file = document.querySelector(".files").files[0];
     sendFilesSize = file.size;
     sendFileName = file.name;
     console.log("size", file.size);
@@ -315,11 +324,15 @@ function sendData() {
     fileReader.addEventListener('load', e => {
         sendDataChannel(e.target.result);
         offset += e.target.result.byteLength;
-        const sendPercentage = Math.floor((offset / sendFilesSize) * 100)
-        sendProgress.innerHTML = "sending..." + sendPercentage + "%";
-        setTimeout(() => {
-            sendProgress.style.display = "none"
-        }, 20000);
+        sendProgress.style.display = "inline-block"
+        sendProgress.value = offset;
+        sendProgress.max = sendFilesSize;
+        if (sendFilesSize == offset) {
+            setTimeout(() => {
+                sendProgress.style.display = "none"
+            }, 5000);
+        }
+
         if (offset < file.size) {
             readSlice(offset);
         }
@@ -359,11 +372,15 @@ function openDataChannel() {
         if (event.data instanceof ArrayBuffer) {
             receiveBuffer.push(event.data);
             receivedSize += event.data.byteLength;
-            const receivePercentage = Math.floor((receivedSize / sendFilesSize) * 100)
-            receiveProgress.innerHTML = "receiving..." + receivePercentage + "%";
-            setTimeout(() => {
-                receiveProgress.style.display = "none"
-            }, 20000);
+            receiveProgress.style.display = "inline-block"
+            receiveProgress.value = receivedSize;
+            receiveProgress.max = sendFilesSize;
+            if (receivedSize == sendFilesSize) {
+                setTimeout(() => {
+                    receiveProgress.style.display = "none"
+                }, 5000);
+            }
+
             //   接收完之后(判断接收方大小是否和发送方大小一致)
             if (receivedSize === sendFilesSizepar) {
                 received = new Blob(receiveBuffer);
