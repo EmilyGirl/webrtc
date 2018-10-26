@@ -131,7 +131,7 @@ height: 150px;
                                 <h4 class="modal-title">Modal title</h4>
                             </div>
                             <div class="modal-body">
-                                <p id="doOfferText"></p>
+                                <!-- <p id="doOfferText"></p> -->
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-default" data-dismiss="modal" id="doOfferfail">拒绝</button>
@@ -140,7 +140,25 @@ height: 150px;
                         </div><!-- /.modal-content -->
                     </div><!-- /.modal-dialog -->
                 </div>
-
+                <!-- 是否同意发送文件 -->
+                <div class="modal fade" id="onFiles" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                                            aria-hidden="true">&times;</span></button>
+                                    <h4 class="modal-title">Modal title</h4>
+                                </div>
+                                <div class="modal-body">
+                                    <p id="doText"></p>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal" id="Filefail">拒绝</button>
+                                    <button type="button" id="Filesuccess" class="btn btn-primary">同意 </button>
+                                </div>
+                            </div><!-- /.modal-content -->
+                        </div><!-- /.modal-dialog -->
+                    </div>
                 <div class="col-xs-12 col-md-12">
                     <div class="yourInfo">
                         <span class="YouronLine"></span>
@@ -157,11 +175,11 @@ height: 150px;
 
                     <div class="yourchange">
                         <!-- 建立对等连接 -->
-                        <input type="text" style="width:30%;display:inline-block;height:26px" class="form-control" id="their-username">
-                        <button class="btn btn-default connect" style="padding:2px 12px" type="submit">connect</button>
+                        <!-- <input type="text" style="width:30%;display:inline-block;height:26px" class="form-control" id="their-username">
+                        <button class="btn btn-default connect" style="padding:2px 12px" type="submit">connect</button> -->
                         <!-- 连接 -->
                         <span id="readyConnect"></span>
-                        <button class="btn btn-default onHang" style="padding:2px 12px" type="submit">挂断</button>
+                        <!-- <button class="btn btn-default onHang" style="padding:2px 12px" type="submit">挂断</button> -->
                         <div class="clear"></div>
                     </div>
                     <!-- 记录 -->
