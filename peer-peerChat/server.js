@@ -137,29 +137,31 @@ wss.on('connection', function (connection) {
                     sendTo(conn, {
                         type: "candidate",
                         candidate: data.candidate,
-                        name:connection.name,
+                        name: connection.name,
                     });
                 }
                 break;
             case "sendFile":
                 console.log("请求是否接收文件");
-                var conn = users[data.name];
-                // conn.otherName = null;
+                var conn = users[data.nowName];
                 if (conn != null) {
                     sendTo(conn, {
                         type: "sendFile",
-                        name:connection.name
+                        name: connection.name
                     });
                 }
+                // }
+                // conn.otherName = null;
+
                 break;
             case "sendFilesSuccess":
-            console.log("同意接收");
-                var conn = users[data.name];
+                console.log("同意接收");
+                var conn = users[data.theirname];
                 // conn.otherName = null;
                 if (conn != null) {
                     sendTo(conn, {
                         type: "sendFilesSuccess",
-                        name:connection.name,
+                        name: connection.name,
                     });
                 }
                 break;
