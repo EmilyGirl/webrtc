@@ -56,7 +56,6 @@ wss.on('connection', function (connection) {
                 console.log("user logged", data.name);
                 //    不包含这个用户
                 if (onlineUser.indexOf(data.name) == -1) {
-
                     users[data.name] = connection;
                     connection.name = data.name;
                     sendTo(connection, {
@@ -150,9 +149,6 @@ wss.on('connection', function (connection) {
                         name: connection.name
                     });
                 }
-                // }
-                // conn.otherName = null;
-
                 break;
             case "sendFilesSuccess":
                 console.log("同意接收");

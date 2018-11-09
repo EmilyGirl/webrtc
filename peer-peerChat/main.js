@@ -1,9 +1,11 @@
-// 与服务器建立websocket连接
-var name,
-    connectionUser,
-    leaveName,
-    connection = new WebSocket("ws://192.168.131.216:8080/"),
-    publicUsers = null;
+/*
+   定义
+*/
+var name,//创建的用户
+    connectionUser,//建立连接的用户
+    connection = new WebSocket("ws://192.168.131.216:8080/"),//客户端建立websocket连接
+    publicUsers = null;//实时更新在线用户
+
 // 操作js
 var loginPage = document.querySelector("#login-page"),
     usernameInput = document.querySelector("#username"),
@@ -21,9 +23,6 @@ var loginPage = document.querySelector("#login-page"),
     receivedRecord = document.querySelector(".received"),
     onlineUser = document.querySelector("#onlineUser"),
     // onHang = document.querySelector(".onHang"),
-    doOffer = document.querySelector("#doOffer"),
-    doOffersuccess = document.querySelector("#doOffersuccess"),
-    doOfferfail = document.querySelector("#doOfferfail"),
     loginout = document.querySelector(".loginout"),
     YouronLine = document.querySelector(".YouronLine"),
     onFiles = document.querySelector("#onFiles"),
@@ -32,15 +31,18 @@ var loginPage = document.querySelector("#login-page"),
     fileNew = document.querySelector("#fileNew"),
     doText = document.querySelector("#doText");
 
-
-$("#doOffer").modal("hide");
 sendProgress.style.display = "none";
 receiveProgress.style.display = "none";
 sharePage.style.display = "none";
+
+/*
+***************************************** 用户与服务端的连接
+*/
+
 // 用户开启与服务端的连接
 connection.onopen = function () {
     console.log("用户与服务端连接成功");
-    // console.log(JSON.stringify({ type: 'getOnlineUsers' }))
+    // 在页面加载之前先获取在线用户
     connection.send(JSON.stringify({
         type: 'getonlineusers',
     }));
@@ -48,7 +50,6 @@ connection.onopen = function () {
 }
 // 服务端反馈回信息
 connection.onmessage = function (message) {
-    // console.log("get message success", message);
     // 字符串转换为对象
     var data = JSON.parse(message.data);
     // 通过type属性值确定信息
@@ -70,7 +71,6 @@ connection.onmessage = function (message) {
             break;
         case 'getonlineusers':
             publicUsers = data.users;
-            // console.log("publicUsers", publicUsers);
             updateUsers(publicUsers);
             break;
         // 这里接收
@@ -97,7 +97,12 @@ function send(message) {
     // 向服务端发送信息
     connection.send(JSON.stringify(message));
 }
-// 本地存储
+
+
+
+/*
+// 本地存储 登录用户
+*/
 window.localStorage.setItem("name", name);
 usernameInput.value = localStorage.getItem("name") ? localStorage.getItem("name") : usernameInput.value;
 loginButton.addEventListener("click", function (event) {
@@ -109,17 +114,17 @@ loginButton.addEventListener("click", function (event) {
         })
     }
 });
-function onLogin(success) {
-    if (success == false) {
-        alert("用户名已经登录")
-    } else {
-        // alert("登陆成功")
-        loginPage.style.display = "none";
-        sharePage.style.display = "block";
-        // 登陆成功之后显示用户列表
-        // onLines(users)
-    }
-};
+
+
+
+/**
+ ********************************************** 开始连接
+ */
+
+var yourConnection,//连接对象
+    nowName,//点击的用户名
+    _oldUsers = [],//老用户
+    _userConections = [];//新数组
 // 获取用户媒体
 function hasUserMedia() {
     navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia
@@ -130,18 +135,9 @@ function hasRTCPeerConnection() {
     window.RTCPeerConnection = window.RTCPeerConnection || window.webkitRTCPeerConnection || window.mozRTCPeerConnection;
     return !!window.RTCPeerConnection;
 }
-// 获取不同用户
-var yourConnections = [], yourConnection, connectedUser;
-var jsonArray = [];
-var _oldUsers = [];
-var _userConections = [];
-//获取和上次不同的用户
-function getNewJionUser(arr1, arr2) {
-    return arr1.concat(arr2).filter(function (v, i, arr) {
-        return arr.indexOf(v) === arr.lastIndexOf(v);
-    });
-}
-// 创建连接对象
+/* 
+************************************** 创建连接对象
+*/
 function createYourConnection() {
     if (hasRTCPeerConnection()) {
         var configuration = {
@@ -157,10 +153,10 @@ function createYourConnection() {
     }
     return [yourConnection, originalChannel];
 }
-// 在线用户数
+/* 
+**************************************  在线用户数
+*/
 function onLines(users) {
-    // 数组push之前要清空
-    yourConnections = [];
     var newUserName = getNewJionUser(_oldUsers, users)[0];
     if (users.length > _oldUsers.length) {
         //有新用户加入进来
@@ -184,8 +180,6 @@ function onLines(users) {
         }
     }
     _oldUsers = users;
-    console.log("......", newUserName);
-    console.log("用户数目变化了", _userConections)
     onlineUser.innerHTML = '';
     YouronLine.innerHTML = name;
     for (var i = 0; i < users.length; i++) {
@@ -202,38 +196,41 @@ function onLines(users) {
                 alert("这是你自己哦");
             } else {
                 console.log("_userConections", _userConections);
-                test(_userConections, this.innerHTML);
+                /**
+                 * 开始offer  answer
+                 */
+                startClick(_userConections, this.innerHTML);
 
             }
         })
     }
 }
-var nowName;
-// 开始offer，answer准备
-function test(arr, inner) {
+/**
+ ************************************* 开始offer，answer准备
+ */
+
+function startClick(arr, inner) {
     for (var a = 0; a < arr.length; a++) {
         if (arr[a].name == inner) {
             nowName = arr[a].name;
+            // send按钮发送标记
             sendButton.setAttribute("data", nowName);
             document.querySelector(".files").setAttribute('data', nowName);
-           
+
             readyConnect.innerHTML = arr[a].name;
             if (arr[a].status == '') {
+                //确定好建立连接的用户开始建立连接
                 startConnection(arr[a].name, arr[a].value);
                 arr[a].value.oniceconnectionstatechange = function (event) {
                     if (event.target.iceConnectionState == 'completed') {
                         arr[a].status = 'success';
-                        // openDataChannel(arr[a].name, arr[a].datach);
                     } else {
-                        // startConnection(arr[a].name, arr[a].value);
                     }
                 }
                 receivedRecord.innerHTML = '';
                 return;
             } else {
-                alert("连接成功");
-                // startConnection(arr[a].name, arr[a].value);
-                // 点击切换到当前的连接对象
+                console.log("连接成功");
                 receivedRecord.innerHTML = '';
 
             }
@@ -244,8 +241,9 @@ function test(arr, inner) {
     //_userConections这是最新数组   arr只是临时的变量  最后赋值给_userConections而已
     _userConections = arr;
 }
-// 发送offer和answer
-// name HE PEERCONNETION
+/**
+ *************************************** 发送offer和answer
+ */
 function startConnection(user, yourValue) {
     connectionUser = user;
     yourValue.onicecandidate = function (event) {
@@ -255,9 +253,6 @@ function startConnection(user, yourValue) {
                 candidate: event.candidate,
             })
         }
-    };
-    yourValue.onnegotiationneeded = function (event) {
-        console.log(event + ' onnegotiationneeded');
     };
     yourValue.createOffer(function (offer) {
         send({
@@ -271,18 +266,58 @@ function startConnection(user, yourValue) {
     })
 
 };
+
+/**
+ **************************************** send发送数据
+ */
+
+sendButton.addEventListener("click", function () {
+    var files;
+    files = document.querySelector(".files").files;
+    var newData = _userConections.filter(function (item) {
+        return item.name == nowName;
+    })
+    var newDataChannel = newData[0].datach;
+    var messageData = message.value;
+    if (files.length > 0) {
+        // 发送文件之前请求是否同意接收
+        send({
+            type: 'sendFile',
+            nowName: nowName,
+
+        });
+    } else if (messageData.length > 0) {
+        receivedRecord.innerHTML += name + ":" + messageData + "<br/>";
+        receivedRecord.scrollTop = receivedRecord.scrollHeight;
+
+        if (newDataChannel.readyState == 'open') {
+            newDataChannel.send(messageData);
+        }
+    }
+    message.value = '';
+})
+/**
+ **************************************** 通过服务器端返回的type值调用的函数
+ */
+function onLogin(success) {
+    if (success == false) {
+        alert("用户名已经登录")
+    } else {
+        loginPage.style.display = "none";
+        sharePage.style.display = "block";
+    }
+};
 function onOffer(offer, name) {
     // 请求连接
     connectionUser = name;
+    // 查找该用户的数组
     var data = _userConections.filter(function (item) {
         return item.name == connectionUser;
     })
-    console.log("接受方数组",_userConections);
     var pc = data[0].value;
     var pcName = data[0].name;
     pc.setRemoteDescription(new RTCSessionDescription(offer));
     pc.createAnswer(function (answer) {
-        // console.log('answer', answer);
         pc.setLocalDescription(answer);
         send({
             type: 'answer',
@@ -310,6 +345,94 @@ function onCandidate(candidate, name) {
     var pc = data[0].value;
     pc.addIceCandidate(new RTCIceCandidate(candidate));
 };
+function sendFile(theirname) {
+    $("#onFiles").modal('show');
+    doText.innerHTML = theirname + '将发送给您文件';
+    Filesuccess.addEventListener("click", function () {
+        send({
+            type: 'sendFilesSuccess',
+            theirname: theirname,
+        })
+        $("#onFiles").modal('hide');
+        // 清空之前的theirname值（暂时这样改，后期优化）
+        theirname = '';
+    })
+    Filefail.addEventListener("click", function () {
+        alert("请稍后发送");
+    })
+};
+function sendFilesSuccess() {
+    sendData();
+}
+function onLeave() {
+    readyConnect.innerHTML = '';
+}
+
+/**
+ *********************************************  回调成功之后发送文件处理
+ */
+
+var sendFilesSize,//文件大小
+    sendFileName,//文件名字
+    receiveBuffer = [],//文件内容blob
+    receivedSize = 0;//传送文件进度
+function sendData() {
+    var newData = _userConections.filter(function (item) {
+        return item.name == nowName;
+    })
+    var newDataChannel = newData[0].datach;
+
+    const file = document.querySelector(".files").files[0];
+    sendFilesSize = file.size;
+    sendFileName = file.name;
+    console.log("size", file.size);
+    console.log("sendsize", file);
+    const obj = {
+        "size": sendFilesSize,
+        "name": sendFileName,
+    }
+    if (newDataChannel.readyState == 'open') {
+        //我刚才说过了在这里
+        newDataChannel.send(JSON.stringify(obj));
+    }
+    // 发送数据分块处理
+    const chunkSize = 16384;
+    var fileReader = new FileReader();
+    console.log(fileReader);
+    let offset = 0;
+    fileReader.addEventListener('error', error => console.error('Error reading file:', error));
+    fileReader.addEventListener('abort', event => console.log('File reading aborted:', event));
+    fileReader.addEventListener('load', e => {
+        if (newDataChannel.readyState == 'open') {
+            //我刚才说过了在这里
+            newDataChannel.send(e.target.result);
+        }
+        offset += e.target.result.byteLength;
+        sendProgress.style.display = "inline-block"
+        sendProgress.value = offset;
+        sendProgress.max = sendFilesSize;
+        if (offset < file.size) {
+            readSlice(offset);
+            sendProgress.style.display = "none"
+        }
+        if (sendFilesSize == offset) {
+            setTimeout(() => {
+                sendProgress.style.display = "none"
+                fileNew.innerHTML = "<input type='file' class='files' style='display: inline-block' name='file'>";
+            }, 5000);
+        }
+    });
+    const readSlice = o => {
+        // console.log('readSlice ', o);
+        const slice = file.slice(offset, o + chunkSize);
+        fileReader.readAsArrayBuffer(slice);
+    };
+    readSlice(0);
+}
+
+/**
+ ************************************************ 数据通道
+ */
 // 用户发过来自己处理
 function readydatachannel(theirname, yourConnectiondata) {
     readyConnect.innerHTML = theirname;
@@ -317,7 +440,6 @@ function readydatachannel(theirname, yourConnectiondata) {
     yourConnectiondata.ondatachannel = function (event) {
         // 接收通道
         var dataChannel = event.channel;
-        console.log("theirrrrrrrrrrrrr", dataChannel);
         dataChannel.binaryType = "arraybuffer";
         dataChannel.onopen = function () {
             console.log("用户=>自己 的通道   自己发送给用户 ");
@@ -325,12 +447,11 @@ function readydatachannel(theirname, yourConnectiondata) {
             dataChannel.send(name + '连接成功接收返回')
         }
         dataChannel.onmessage = function (event) {
-            // console.log("ondatachannel message:", event.data);
 
-            var received, sendFilesSizepar;
+            var received,//接收的blob对象
+                sendFilesSizepar;//发送方通过datachannel发送发过来的文件参数
             sendFilesSizepar = parseInt(sendFilesSize)
             // 判断接收类型
-            console.log("event", event);
             if (event.data instanceof ArrayBuffer) {
                 receiveBuffer.push(event.data);
                 receivedSize += event.data.byteLength;
@@ -358,11 +479,12 @@ function readydatachannel(theirname, yourConnectiondata) {
             } else {
                 // 判断接收到的数据是文本/文件名
                 if (isJSON(event.data)) {
-                    //    文件
+                    // 文件
                     fileInfo = JSON.parse(event.data);
                     sendFilesSize = fileInfo.size;
                     sendFileName = fileInfo.name;
                 } else {
+                    // 文本
                     sendFileName = event.data;
 
                 }
@@ -378,24 +500,17 @@ function readydatachannel(theirname, yourConnectiondata) {
 }
 // 发送给用户
 function openDataChannel(yourname, datachannel) {
-
-    // doText.innerHTML=yourname + '将发送给您文件';
     var dataChannel = datachannel;
-    console.log('yourrrrrrr', yourname, dataChannel, dataChannel.readyState);
     dataChannel.binaryType = "arraybuffer";
-
     dataChannel.onerror = function (err) {
         console.log("datachennel error", err)
     };
     dataChannel.onopen = function () {
         // console.log("自己=>用户 的通道  用户发送给自己")
-        console.log("datamy-user", dataChannel);
-        console.log(dataChannel.readyState);
         dataChannel.send(name + '连接成功');
 
     };
     dataChannel.onmessage = function (event) {
-        // console.log("event", event);
         var received, sendFilesSizepar;
         sendFilesSizepar = parseInt(sendFilesSize)
         // 判断接收类型
@@ -425,13 +540,12 @@ function openDataChannel(yourname, datachannel) {
         } else {
             // 判断接收到的数据是文本/文件名
             if (isJSON(event.data)) {
-                //    文件
+                // 文件
                 fileInfo = JSON.parse(event.data);
                 sendFilesSize = fileInfo.size;
                 sendFileName = fileInfo.name;
             } else {
                 // 文本
-
                 sendFileName = event.data;
 
             }
@@ -442,145 +556,41 @@ function openDataChannel(yourname, datachannel) {
 
     };
     dataChannel.onclose = function () {
-        // sendButton.display = true;
     }
 
 
 };
-// 发送数据
-
-sendButton.addEventListener("click", function () {
-    var files;
-    files = document.querySelector(".files").files;
-    var newData = _userConections.filter(function (item) {
-        return item.name == nowName;
-    })
-    var newDataChannel = newData[0].datach;
-    var messageData = message.value;
-    if (files.length > 0) {
-        // 发送文件之前请求是否同意接收
+/**
+ * 更新实时用户
+ */
+function updateUsers(data) {
+    if (data == null) return;
+    if (data.length > 0) {
+        data = removeArryVal(name, data);
         send({
-            type: 'sendFile',
-            nowName: nowName,
-
-        });
-    } else if (messageData.length > 0) {
-        receivedRecord.innerHTML += name + ":" + messageData + "<br/>";
-        receivedRecord.scrollTop = receivedRecord.scrollHeight;
-
-        if (newDataChannel.readyState == 'open') {
-            //我刚才说过了在这里
-            newDataChannel.send(messageData);
-        }
-    }
-    message.value = '';
-})
-// 收到回复之后处理文件
-function sendFile(theirname) {
-    $("#onFiles").modal('show');
-    doText.innerHTML = theirname + '将发送给您文件';
-    Filesuccess.addEventListener("click", function () {
-        send({
-            type: 'sendFilesSuccess',
-            theirname: theirname,
+            type: 'newData',
+            newpublicUsers: data
         })
-        $("#onFiles").modal('hide');
-        // 清空之前的theirname值（暂时这样改，后期优化）
-        theirname = '';
-    })
-    Filefail.addEventListener("click", function () {
-        alert("请稍后发送");
-    })
-};
-// 成功之后自己这边处理发送文件
-function sendFilesSuccess() {
-    sendData();
-    // receivedRecord.innerHTML += name + ":" + files[0].name + "<br/>";
-    // receivedRecord.scrollTop = receivedRecord.scrollHeight;
+    }
 }
-// 发送文件处理
-var sendFilesSize, sendFileName, receiveBuffer = [], receivedSize = 0;
-function sendData() {
-    //这个位置会执行几次？1
-    // console.log("datachannel file", dataChannel);
-    var newData = _userConections.filter(function (item) {
-        return item.name == nowName;
-    })
-    var newDataChannel = newData[0].datach;
-
-    const file = document.querySelector(".files").files[0];
-    sendFilesSize = file.size;
-    sendFileName = file.name;
-    console.log("size", file.size);
-    console.log("sendsize", file);
-    const obj = {
-        "size": sendFilesSize,
-        "name": sendFileName,
-    }
-
-
-
-    if (newDataChannel.readyState == 'open') {
-        //我刚才说过了在这里
-        newDataChannel.send(JSON.stringify(obj));
-    }
-
-    // 发送数据分块处理
-    const chunkSize = 16384;
-    var fileReader = new FileReader();
-    console.log(fileReader);
-    let offset = 0;
-    fileReader.addEventListener('error', error => console.error('Error reading file:', error));
-    fileReader.addEventListener('abort', event => console.log('File reading aborted:', event));
-    fileReader.addEventListener('load', e => {
-
-
-        if (newDataChannel.readyState == 'open') {
-            //我刚才说过了在这里
-            newDataChannel.send(e.target.result);
-        }
-
-
-
-        offset += e.target.result.byteLength;
-        sendProgress.style.display = "inline-block"
-        sendProgress.value = offset;
-        sendProgress.max = sendFilesSize;
-        if (offset < file.size) {
-            readSlice(offset);
-            sendProgress.style.display = "none"
-            // fileNew.innerHTML = "<input type='file' class='files' style='display: inline-block' name='file'>";
-        }
-        if (sendFilesSize == offset) {
-            setTimeout(() => {
-                sendProgress.style.display = "none"
-                fileNew.innerHTML = "<input type='file' class='files' style='display: inline-block' name='file'>";
-            }, 5000);
-
-        }
-
-
+loginout.addEventListener("click", function () {
+    updateUsers(publicUsers);
+    location.reload();
+    send({
+        type: 'leave',
     });
-    const readSlice = o => {
-        // console.log('readSlice ', o);
-        const slice = file.slice(offset, o + chunkSize);
-        fileReader.readAsArrayBuffer(slice);
-    };
-    readSlice(0);
+})
 
-}
-function sendDataChannel(data) {
-    if (dataChannel.readyState == 'open') {
-        dataChannel.send(data);
-        // sendButton.disabled = false;
-        // } else {
-        // sendButton.disabled = true;
-        // alert("先建立连接");
-    }
-}
-// 
 
-// 判断是否为json字符串
+
+
+
+/**
+ * **********************************************************封装函数
+ */
+/**
+ * // 判断是否为json字符串
+ */
 function isJSON(str) {
     if (typeof str == 'string') {
         try {
@@ -599,7 +609,9 @@ function isJSON(str) {
     }
     console.log('It is not a string!')
 }
-// 移除某个元素
+/**
+ * // 移除某个元素
+ */
 function removeArryVal(s, arr) {
     for (var i = 0; i < arr.length; i++) {
         if (arr[i] == s) {
@@ -609,26 +621,11 @@ function removeArryVal(s, arr) {
 
     return arr;
 }
-function updateUsers(data) {
-
-    // console.log("-----", data);
-    if (data == null) return;
-    if (data.length > 0) {
-        data = removeArryVal(name, data);
-        send({
-            type: 'newData',
-            newpublicUsers: data
-        })
-    }
-}
-loginout.addEventListener("click", function () {
-    updateUsers(publicUsers);
-    location.reload();
-    send({
-        type: 'leave',
+/**
+ * //获取和上次不同的用户
+ */
+function getNewJionUser(arr1, arr2) {
+    return arr1.concat(arr2).filter(function (v, i, arr) {
+        return arr.indexOf(v) === arr.lastIndexOf(v);
     });
-})
-// 关闭对等连接
-function onLeave() {
-    readyConnect.innerHTML = '';
-}
+};
